@@ -71,12 +71,12 @@ xcopy "jinkra_mine_shader" "C:\Users\<用户名>\AppData\Roaming\Blender Foundat
 `
 
 **macOS**:
-`ash
+`Bash
 cp -r jinkra_mine_shader ~/Library/Application\ Support/Blender/<版本>/scripts/addons/
 `
 
 **Linux**:
-`ash
+`Bash
 cp -r jinkra_mine_shader ~/.config/blender/<版本>/scripts/addons/
 `
 
