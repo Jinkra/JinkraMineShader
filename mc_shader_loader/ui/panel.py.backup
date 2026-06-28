@@ -1,0 +1,360 @@
+﻿"""
+UI 面板模块 - Blender 3D 视图侧边栏
+
+功能:
+  1. 添加侧边栏面板 "JinkraMineShader"
+  2. 光影包选择和加载
+  3. 参数调整 UI
+  4. 快速操作按钮
+"""
+
+import bpy
+from bpy.types import Panel, Operator, PropertyGroup
+from bpy.props import StringProperty, EnumProperty, BoolProperty, FloatProperty, IntProperty
+
+# 相对导入核心模块
+from . import get_module_path
+import sys
+import os
+
+# 添加核心模块到路径
+addon_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if addon_path not in sys.path:
+    sys.path.insert(0, addon_path)
+
+try:
+    from jinkra_mine_shader.core.zip_parser import MCShaderZipParser
+    from jinkra_mine_shader.core.shader_validator import MCShaderValidator
+    from jinkra_mine_shader.core.properties_parser import PropertiesParser
+    from jinkra_mine_shader.utils.logger import logger, PathHelper
+except ImportError:
+    # 备用：直接导入
+    from core.zip_parser import MCShaderZipParser
+    from core.shader_validator import MCShaderValidator
+    from core.properties_parser import PropertiesParser
+    from utils.logger import logger, PathHelper
+
+
+class jinkra_mine_shaderLoaderOperator(Operator):
+    """光影包加载操作符"""
+    bl_idname = "jinkra_mine_shader.load_shader_pack"
+    bl_label = "Load Minecraft Shader Pack"
+    
+    # 文件选择对话框
+    filepath: StringProperty(
+        name="Shader Pack",
+        description="选择 Minecraft 光影 ZIP 包",
+        subtype='FILE_PATH',
+        default=""
+    )
+    
+    filter_glob: StringProperty(
+        default="*.zip",
+        options={'HIDDEN'}
+    )
+    
+    def execute(self, context):
+        """执行加载操作"""
+        if not self.filepath:
+            self.report({'ERROR'}, "请选择一个 ZIP 文件")
+            return {'CANCELLED'}
+        
+        try:
+            logger.info(f"正在加载光影包: {self.filepath}")
+            
+            # 1. 解压
+            parser = MCShaderZipParser(self.filepath)
+            success, msg = parser.extract_zip()
+            
+            if not success:
+                self.report({'ERROR'}, msg)
+                return {'CANCELLED'}
+            
+            logger.info(msg)
+            
+            # 2. 验证
+            validator = MCShaderValidator(parser.extract_dir)
+            report = validator.validate_all()
+            
+            if not report.is_valid:
+                self.report({'ERROR'}, "光影包验证失败")
+                return {'CANCELLED'}
+            
+            logger.info(report.get_summary())
+            
+            # 3. 读取配置
+            success, config_or_msg = parser.get_shaders_properties()
+            
+            if not success:
+                self.report({'ERROR'}, config_or_msg)
+                return {'CANCELLED'}
+            
+            # 4. 解析参数
+            prop_parser = PropertiesParser(config_or_msg)
+            
+            # 保存到场景上下文
+            context.scene.jinkra_mine_shader_parser = prop_parser
+            context.scene.jinkra_mine_shader_zip_parser = parser
+            
+            # 更新 UI
+            context.scene.jinkra_mine_shader_loaded = True
+            context.scene.jinkra_mine_shader_path = self.filepath
+            context.scene.jinkra_mine_shader_param_count = len(config_or_msg)
+            
+            self.report({'INFO'}, f"✓ 光影包加载成功！包含 {len(config_or_msg)} 个参数")
+            logger.info("光影包加载完成")
+            
+            return {'FINISHED'}
+        except Exception as e:
+            self.report({'ERROR'}, f"加载失败: {str(e)}")
+            return {'CANCELLED'}
+    
+    def invoke(self, context, event):
+        """调用文件选择对话框"""
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
+
+class jinkra_mine_shaderCreateEnvironmentOperator(Operator):
+    """创建 MC 环境操作符"""
+    bl_idname = "jinkra_mine_shader.create_environment"
+    bl_label = "Create MC Environment"
+    
+    def execute(self, context):
+        """创建 MC 环保光照环境"""
+        try:
+            logger.info("创建 MC 环境...")
+            
+            # 动态导入环境模块
+            try:
+                from jinkra_mine_shader.environment.sky_creator import MCEnvironmentCreator
+            except ImportError:
+                from environment.sky_creator import MCEnvironmentCreator
+            
+            # 创建环境
+            MCEnvironmentCreator.create_world_environment()
+            sun = MCEnvironmentCreator.create_sun_light()
+            MCEnvironmentCreator.setup_eevee_render_settings()
+            
+            self.report({'INFO'}, "✓ 环境创建成功")
+            return {'FINISHED'}
+        except Exception as e:
+            self.report({'ERROR'}, f"环境创建失败: {str(e)}")
+            return {'CANCELLED'}
+
+
+class jinkra_mine_shaderCreateMaterialOperator(Operator):
+    """给选中物体创建 MC 材质"""
+    bl_idname = "jinkra_mine_shader.create_material"
+    bl_label = "Create MC Material"
+    
+    def execute(self, context):
+        """为选中物体创建标准 MC PBR 材质"""
+        if not context.selected_objects:
+            self.report({'WARNING'}, "请先选中一个或多个物体")
+            return {'CANCELLED'}
+        
+        try:
+            logger.info(f"为 {len(context.selected_objects)} 个物体创建材质...")
+            
+            # 动态导入材质模块
+            try:
+                from jinkra_mine_shader.materials.pbr_template import MCBlockMaterialFactory
+            except ImportError:
+                from materials.pbr_template import MCBlockMaterialFactory
+            
+            # 创建草方块材质作为默认
+            mat = MCBlockMaterialFactory.create_block_material("grass")
+            
+            if not mat:
+                self.report({'ERROR'}, "材质创建失败")
+                return {'CANCELLED'}
+            
+            # 应用到选中物体
+            count = 0
+            for obj in context.selected_objects:
+                if obj.type == 'MESH':
+                    if len(obj.data.materials) == 0:
+                        obj.data.materials.append(mat)
+                    else:
+                        obj.data.materials[0] = mat
+                    count += 1
+            
+            self.report({'INFO'}, f"✓ 为 {count} 个物体创建材质成功")
+            return {'FINISHED'}
+        except Exception as e:
+            self.report({'ERROR'}, f"材质创建失败: {str(e)}")
+            return {'CANCELLED'}
+
+
+class JinkraMineShaderPanel(Panel):
+    """JinkraMineShader 侧边栏面板"""
+    bl_label = "JinkraMineShader"
+    bl_idname = "VIEW3D_PT_jinkra_mine_shader"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "JinkraMineShader"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw(self, context):
+        """绘制面板内容"""
+        layout = self.layout
+        scene = context.scene
+        
+        # ===== 第一部分：光影包加载 =====
+        box = layout.box()
+        box.label(text="📦 光影包加载", icon='PACKAGE')
+        
+        if not scene.jinkra_mine_shader_loaded:
+            # 未加载状态
+            box.operator(
+                "jinkra_mine_shader.load_shader_pack",
+                text="选择光影包",
+                icon='FILE_FOLDER'
+            )
+        else:
+            # 已加载状态
+            box.label(text=f"✓ 已加载", icon='CHECKMARK')
+            box.label(text=f"参数数量: {scene.jinkra_mine_shader_param_count}", icon='PROPERTIES')
+            
+            # 重新加载按钮
+            box.operator(
+                "jinkra_mine_shader.load_shader_pack",
+                text="重新加载",
+                icon='FILE_REFRESH'
+            )
+        
+        layout.separator()
+        
+        # ===== 第二部分：快速操作 =====
+        box = layout.box()
+        box.label(text="⚙️ 快速操作", icon='TOOL_SETTINGS')
+        
+        box.operator(
+            "jinkra_mine_shader.create_environment",
+            text="创建 MC 环境",
+            icon='WORLD'
+        )
+        
+        box.operator(
+            "jinkra_mine_shader.create_material",
+            text="创建 MC 材质",
+            icon='MATERIAL'
+        )
+        
+        layout.separator()
+        
+        # ===== 第三部分：设置 =====
+        box = layout.box()
+        box.label(text="⚙️ 设置", icon='PREFERENCES')
+        
+        try:
+            prefs = context.preferences.addons['jinkra_mine_shader'].preferences
+            box.prop(prefs, 'auto_switch_eevee')
+            box.prop(prefs, 'verbose_logging')
+        except:
+            box.label(text="设置加载失败", icon='ERROR')
+
+
+class jinkra_mine_shaderProperties(PropertyGroup):
+    """JinkraMineShader 相关属性"""
+    
+    # 加载状态
+    jinkra_mine_shader_loaded: BoolProperty(
+        name="Shader Loaded",
+        description="是否已加载光影包",
+        default=False
+    )
+    
+    jinkra_mine_shader_path: StringProperty(
+        name="Shader Path",
+        description="光影包文件路径",
+        default=""
+    )
+    
+    jinkra_mine_shader_param_count: IntProperty(
+        name="Parameter Count",
+        description="光影包参数总数",
+        default=0
+    )
+
+
+def register():
+    """注册 UI 类"""
+    try:
+        bpy.utils.register_class(jinkra_mine_shaderProperties)
+    except RuntimeError:
+        pass
+    
+    try:
+        bpy.utils.register_class(jinkra_mine_shaderLoaderOperator)
+    except RuntimeError:
+        pass
+    
+    try:
+        bpy.utils.register_class(jinkra_mine_shaderCreateEnvironmentOperator)
+    except RuntimeError:
+        pass
+    
+    try:
+        bpy.utils.register_class(jinkra_mine_shaderCreateMaterialOperator)
+    except RuntimeError:
+        pass
+    
+    try:
+        bpy.utils.register_class(JinkraMineShaderPanel)
+    except RuntimeError:
+        pass
+    
+    # 添加属性到 Scene
+    try:
+        bpy.types.Scene.jinkra_mine_shader_props = bpy.props.PointerProperty(type=jinkra_mine_shaderProperties)
+    except:
+        pass
+    
+    # 快捷属性
+    try:
+        bpy.types.Scene.jinkra_mine_shader_loaded = BoolProperty(default=False)
+        bpy.types.Scene.jinkra_mine_shader_path = StringProperty(default="")
+        bpy.types.Scene.jinkra_mine_shader_param_count = IntProperty(default=0)
+    except:
+        pass
+
+
+def unregister():
+    """注销 UI 类"""
+    # 移除属性
+    for attr in ['jinkra_mine_shader_props', 'jinkra_mine_shader_loaded', 'jinkra_mine_shader_path', 'jinkra_mine_shader_param_count']:
+        if hasattr(bpy.types.Scene, attr):
+            try:
+                delattr(bpy.types.Scene, attr)
+            except:
+                pass
+    
+    # 注销类
+    try:
+        bpy.utils.unregister_class(JinkraMineShaderPanel)
+    except:
+        pass
+    
+    try:
+        bpy.utils.unregister_class(jinkra_mine_shaderCreateMaterialOperator)
+    except:
+        pass
+    
+    try:
+        bpy.utils.unregister_class(jinkra_mine_shaderCreateEnvironmentOperator)
+    except:
+        pass
+    
+    try:
+        bpy.utils.unregister_class(jinkra_mine_shaderLoaderOperator)
+    except:
+        pass
+    
+    try:
+        bpy.utils.unregister_class(jinkra_mine_shaderProperties)
+    except:
+        pass
+
+
