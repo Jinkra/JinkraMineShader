@@ -1,4 +1,4 @@
-﻿# 🎮 JinkraMineShader for Blender
+﻿#  JinkraMineShader for Blender
 
 一个强大的 Blender 插件，用于加载和应用 Minecraft OptiFine/Iris 光影包，通过 EEVEE 节点系统进行视觉还原。
 
@@ -10,44 +10,44 @@
 ---
 
 
-## 🔄 版本支持
+##  版本支持
 
 ### Blender 版本
-- ✅ **Blender 4.0** - 完全支持
-- ✅ **Blender 4.1** - 完全支持（推荐）
-- ✅ **Blender 5.0** - 完全支持（最新）
+-  **Blender 4.0** - 完全支持
+-  **Blender 4.1** - 完全支持（推荐）
+-  **Blender 5.0** - 完全支持（最新）
 
 ### 光影包格式
-- ✅ **OptiFine** - 完全支持
-- ✅ **Iris** - 完全支持
-- ✅ **自定义格式** - 支持
+-  **OptiFine** - 完全支持
+-  **Iris** - 完全支持
+-  **自定义格式** - 支持
 
 **详细信息**：见 [`VERSION_COMPATIBILITY.md`](docs/VERSION_COMPATIBILITY.md) 和 [`SHADER_FORMAT_GUIDE.md`](docs/SHADER_FORMAT_GUIDE.md)
 
-## ✨ 功能特性
+##  功能特性
 
 ### 核心功能
 
-- ✅ **ZIP 包解析**: 自动解压和验证 Minecraft 光影包
-- ✅ **参数识别**: 智能识别并提取光影配置参数
-- ✅ **EEVEE 还原**: 通过节点系统视觉复刻光影效果
-- ✅ **环境创建**: 一键创建 MC 风格的天空和光照
-- ✅ **PBR 材质**: 为模型快速应用标准 Minecraft PBR 材质
-- ✅ **昼夜系统**: 实时时间滑块，自动同步光照和天空
-- ✅ **天气模式**: 晴天/雨天/雾天快速切换
-- ✅ **预设管理**: 导出/导入光影配置预设
+-  **ZIP 包解析**: 自动解压和验证 Minecraft 光影包
+-  **参数识别**: 智能识别并提取光影配置参数
+-  **EEVEE 还原**: 通过节点系统视觉复刻光影效果
+-  **环境创建**: 一键创建 MC 风格的天空和光照
+-  **PBR 材质**: 为模型快速应用标准 Minecraft PBR 材质
+-  **昼夜系统**: 实时时间滑块，自动同步光照和天空
+-  **天气模式**: 晴天/雨天/雾天快速切换
+-  **预设管理**: 导出/导入光影配置预设
 
 ### 高级特性
 
-- 🎨 **方块材质预设**: 包含 15+ 常见方块的快速材质模板
-- 🎭 **自发光模拟**: MC 0-15 级方块自发光亮度支持
-- 📊 **参数可视化**: 完整的 UI 面板，参数实时可调
-- 🔍 **详细验证**: 完整的光影包格式检验和报告
-- 📦 **模块化架构**: 易于扩展和定制
+-  **方块材质预设**: 包含 15+ 常见方块的快速材质模板
+-  **自发光模拟**: MC 0-15 级方块自发光亮度支持
+-  **参数可视化**: 完整的 UI 面板，参数实时可调
+-  **详细验证**: 完整的光影包格式检验和报告
+-  **模块化架构**: 易于扩展和定制
 
 ---
 
-## 📋 系统要求
+##  系统要求
 
 | 项目 | 要求 |
 |------|------|
@@ -59,7 +59,7 @@
 
 ---
 
-## 🚀 快速开始
+##  快速开始
 
 ### 安装
 
@@ -96,7 +96,7 @@ cp -r jinkra_mine_shader ~/.config/blender/<版本>/scripts/addons/
 
 ---
 
-## 📚 文档
+##  文档
 
 | 文档 | 说明 |
 |------|------|
@@ -106,7 +106,7 @@ cp -r jinkra_mine_shader ~/.config/blender/<版本>/scripts/addons/
 
 ---
 
-## 📦 项目结构
+##  项目结构
 
 \\\
 jinkra_mine_shader/
@@ -134,7 +134,7 @@ docs/
 
 ---
 
-## 💡 使用示例
+##  使用示例
 
 ### 加载标准光影包
 
@@ -186,7 +186,7 @@ for obj in bpy.context.selected_objects:
 
 ---
 
-## 🎯 常见光影包
+##  常见光影包
 
 | 光影包名 | 格式 | 兼容性 |
 |---------|------|--------|
@@ -200,7 +200,7 @@ for obj in bpy.context.selected_objects:
 
 ---
 
-## 🔧 高级配置
+##  高级配置
 
 ### 启用详细日志
 
@@ -227,7 +227,7 @@ for obj in bpy.context.selected_objects:
 
 ---
 
-## 🐛 故障排除
+##  故障排除
 
 ### Q: 插件加载失败？
 **A**: 检查 Blender 控制台（Window > Toggle System Console）查看错误信息
@@ -245,7 +245,7 @@ for obj in bpy.context.selected_objects:
 
 ---
 
-## 📈 路线图
+##  路线图
 
 - [ ] **v1.1**: 预设云同步，参数动画编辑器
 - [ ] **v1.2**: Cycles 渲染器完全支持
@@ -254,7 +254,7 @@ for obj in bpy.context.selected_objects:
 
 ---
 
-## 🤝 贡献
+##  贡献
 
 欢迎提交 Issue 和 Pull Request！
 
@@ -268,19 +268,19 @@ for obj in bpy.context.selected_objects:
 
 ---
 
-## 📄 许可证
+##  许可证
 
 本项目采用 MIT 许可证。详见 [LICENSE](LICENSE) 文件。
 
 ---
 
-## 👨‍💻 作者
+##  作者
 
 **Jinkra** - 原作者
 
 ---
 
-## 🙏 致谢
+##  致谢
 
 - Minecraft 官方团队
 - OptiFine/Iris 光影社区
@@ -288,11 +288,11 @@ for obj in bpy.context.selected_objects:
 
 ---
 
-## 📞 联系方式
+##  联系方式
 
-- 📧 Email: [your-email@example.com]
+- 📧 Email: [jinkra@paperserver.cn]
 - 💬 GitHub Issues: [提交问题](../../issues)
-- 🌐 官方网站: [待定]
+- 🌐 官方网站: [jinkra.slatt.cn]
 
 ---
 
