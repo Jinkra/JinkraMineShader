@@ -19,7 +19,7 @@
 
 ### 光影包格式
 -  **OptiFine** - 完全支持
--  **Iris** - 完全支持
+-  **Iris** - 不完全支持（测试中）
 -  **自定义格式** - 支持
 
 **详细信息**：见 [`VERSION_COMPATIBILITY.md`](docs/VERSION_COMPATIBILITY.md) 和 [`SHADER_FORMAT_GUIDE.md`](docs/SHADER_FORMAT_GUIDE.md)
